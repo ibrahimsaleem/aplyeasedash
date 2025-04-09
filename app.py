@@ -545,21 +545,41 @@ def build_dashboard_content(username):
             ], className="card"),
             
             # Instructions and Footer
-            html.Div([
-                html.H4("📝 About Your Dashboard", style={'marginBottom': '15px'}),
-                html.P("This dashboard is customized based on your Google Sheet data. To see more visualizations:"),
-                html.Ul([
-                    html.Li("Make sure you have columns for Company, Status, and Date"),
-                    html.Li("Use consistent status labels (e.g., Applied, Interview, Shortlisted, Approved, Rejected)"),
-                    html.Li("Use standard date formats (YYYY-MM-DD, MM/DD/YYYY, etc.)")
-                ]),
-                html.P("Need more help? Contact support at support@jobtracker.example.com")
-            ], className="card", style={'marginTop': '20px'}),
-            
-            html.Footer([
-                html.P("Job Application Tracker Dashboard © 2025", style={'textAlign': 'center', 'color': '#6c757d', 'marginTop': '30px'})
-            ])
+           # Instructions and Footer (Updated)
+html.Div([
+    html.H4("About AplyEase", style={'marginBottom': '15px', 'textAlign': 'center'}),
+    html.P(
+        "Hi, I'm Mohammad Ibrahim Saleem, the creator of AplyEase—a revolutionary tool designed to simplify your job and internship applications so you can focus on your strengths and growth.",
+        style={'lineHeight': '1.6', 'textAlign': 'center'}
+    ),
+    html.H5("Our Mission", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
+    html.P(
+        "AplyEase is a reverse recruiting firm dedicated to managing your application process efficiently. We handle everything from ATS resume optimization to proactive recruiter outreach, allowing you to build an impressive digital portfolio and focus on what matters most—your career development.",
+        style={'lineHeight': '1.6', 'textAlign': 'center'}
+    ),
+    html.H5("What We Offer", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
+    html.Ul([
+        html.Li("ATS Resume Optimization – Tailor your resume to successfully pass Applicant Tracking Systems."),
+        html.Li("AI-Powered Job Search – Discover opportunities that match your skills and career goals."),
+        html.Li("Digital Portfolio Creation – Showcase your projects and achievements online."),
+        html.Li("LinkedIn Profile Enhancement – Optimize your professional presence."),
+        html.Li("Application Tracking – Monitor your application status in real time."),
+        html.Li("Recruiter Outreach – Connect with hiring managers to increase your chances of landing interviews.")
+    ], style={'lineHeight': '1.6'}),
+    html.P(
+        "Join hundreds of successful job seekers who have transformed their application process with AplyEase.",
+        style={'marginTop': '15px', 'lineHeight': '1.6', 'textAlign': 'center'}
+    )
+], className="card", style={'marginTop': '20px'}),
+
+html.Footer([
+    html.P("AplyEase © 2025. All Rights Reserved. Designed by Mohammad Ibrahim Saleem.", 
+           style={'textAlign': 'center', 'color': '#6c757d', 'marginTop': '30px'})
+])
+
         ])
+
+        
         return content
     except Exception as e:
         return html.Div(f"Error loading dashboard for {username}: {str(e)}",
