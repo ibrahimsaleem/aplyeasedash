@@ -16,7 +16,7 @@ app = dash.Dash(__name__, server=server, suppress_callback_exceptions=True)
 app.title = "Job Application Tracker"
 
 # ---------------------------------
-# Custom CSS & index_string
+# Custom CSS & index_string (mobile friendly)
 # ---------------------------------
 app.index_string = '''
 <!DOCTYPE html>
@@ -59,6 +59,9 @@ app.index_string = '''
                 border-radius: 8px;
                 margin-bottom: 20px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
             }
             .no-data-message {
                 text-align: center;
@@ -83,6 +86,45 @@ app.index_string = '''
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             }
+            /* Mobile Friendly Adjustments */
+            @media (max-width: 768px) {
+                .dashboard-container {
+                    padding: 10px;
+                    width: 95%;
+                }
+                .card, .header-bar {
+                    padding: 15px;
+                    margin-bottom: 15px;
+                }
+                .header-bar {
+                    flex-direction: column;
+                    text-align: center;
+                }
+                .header-bar > div {
+                    margin-bottom: 10px;
+                }
+                .header-bar img {
+                    height: 28px;
+                    margin-right: 5px;
+                }
+                .btn-primary, button {
+                    width: 100%;
+                    font-size: 14px;
+                }
+                input[type="text"] {
+                    width: 100% !important;
+                }
+                .stats-card {
+                    font-size: 18px;
+                    padding: 10px;
+                }
+                .header-bar h1 {
+                    font-size: 20px;
+                }
+                .header-bar p {
+                    font-size: 14px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -105,7 +147,7 @@ app.layout = html.Div([
 ])
 
 # ---------------------------------
-# HOME PAGE LAYOUT (Create Dashboard)
+# HOME PAGE LAYOUT (For Dashboard Creation)
 # ---------------------------------
 def home_layout():
     return html.Div([
@@ -164,7 +206,7 @@ def home_layout():
     ], className="dashboard-container")
 
 # ---------------------------------
-# Callback: Create Dashboard (Home Page)
+# Callback: Create Dashboard (From Home Page)
 # ---------------------------------
 @app.callback(
     Output('dashboard-link', 'children'),
@@ -181,21 +223,22 @@ def create_user_dashboard(n_clicks, username, sheet_url):
         csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
         df = pd.read_csv(csv_url)
         df.columns = [col.strip().lower() for col in df.columns]
+        # (Optional) Save initial CSV and column mapping locally if desired.
         column_map = {col.lower(): col for col in df.columns}
-
-        # Save the column mapping and also store the Google Sheet URL so we can refresh later
         column_info = pd.DataFrame({'original': df.columns, 'lowercase': list(df.columns)})
         column_info.to_csv(f"dashboard_columns_{username}.csv", index=False)
+        # Save the provided sheet URL for potential future use (not used in dashboard refresh below)
         with open(f"dashboard_sheeturl_{username}.txt", "w") as f:
             f.write(sheet_url)
-
-        # Optionally (for first load) you can save the CSV locally, but it is not used during refresh:
+        # (Optional) Save CSV locally for first load.
         keywords = ['link', 'job page', 'resume']
         for col in df.columns:
             if any(keyword in col.lower() for keyword in keywords):
                 df[col] = df[col].apply(lambda x: f"[link]({x})" if pd.notna(x) and str(x).strip() != "" else "")
         df.to_csv(f"dashboard_data_{username}.csv", index=False)
 
+        # Return a link that points to: main_url/<encoded_excel_sheet_url>
+        # For simplicity, we use the provided sheet URL as the dynamic route parameter (note: it should be URL-encoded).
         return html.Div([
             html.Div([
                 html.I(className="fas fa-check-circle", style={'fontSize': '48px', 'color': '#28a745'}),
@@ -211,7 +254,8 @@ def create_user_dashboard(n_clicks, username, sheet_url):
                         'fontSize': '16px',
                         'marginTop': '15px'
                     }),
-                    href=f"/dashboard/{username}",
+                    # The user is redirected to /<encoded_sheet_url>
+                    href=f"/{sheet_url}",
                     target="_blank"
                 )
             ], className="card", style={'textAlign': 'center', 'padding': '30px'})
@@ -226,7 +270,7 @@ def create_user_dashboard(n_clicks, username, sheet_url):
         ])
 
 # ---------------------------------
-# DASHBOARD HELPER FUNCTIONS (unchanged)
+# Dashboard Helper Functions (unchanged)
 # ---------------------------------
 def get_column_if_exists(df, col_names, column_map=None):
     if column_map is None:
@@ -373,19 +417,18 @@ def create_empty_figure(message):
     return fig
 
 # ---------------------------------
-# FUNCTIONS TO BUILD DASHBOARD PAGE CONTENT
+# Functions to Build Dashboard Page Content
 # ---------------------------------
-def build_dashboard_header(username):
+def build_dashboard_header(sheet_url):
     return html.Div([
         html.Div([
             html.Div([
                 html.Img(src="/assets/dashboard-logo.png", style={'height': '32px', 'marginRight': '10px'}),
             ], style={'display': 'inline-block', 'verticalAlign': 'middle'}),
             html.Div([
-                html.H1(f"{username}'s Job Application Dashboard", style={'margin': '0', 'display': 'inline-block'}),
-            ], style={'display': 'inline-block', 'verticalAlign': 'middle'}),
-            html.P(f"Last updated: {datetime.now().strftime('%b %d, %Y, %I:%M %p')}",
-                   style={'color': 'rgba(255,255,255,0.8)', 'margin': '10px 0 0 0'})
+                html.H1("Your Job Application Dashboard", style={'margin': '0', 'display': 'inline-block'}),
+                html.P(f"Dashboard for: {sheet_url}", style={'color': 'rgba(255,255,255,0.8)', 'fontSize': '14px'})
+            ], style={'display': 'inline-block', 'verticalAlign': 'middle'})
         ]),
         html.Div([
             html.Button("⟳ Refresh Data", id="refresh-button", style={
@@ -400,51 +443,36 @@ def build_dashboard_header(username):
         ])
     ], className="header-bar", style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center'})
 
-def build_dashboard_content(username):
+def build_dashboard_content(sheet_url):
     try:
-        # Instead of reading from a locally saved CSV file, re-read the Google Sheet data.
-        # Retrieve the Google Sheet URL that was saved at dashboard creation.
-        with open(f"dashboard_sheeturl_{username}.txt", "r") as f:
-            sheet_url = f.read().strip()
+        # Use the provided sheet_url directly
         sheet_id = sheet_url.split("/d/")[1].split("/")[0]
         csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
         df = pd.read_csv(csv_url)
         df.columns = [col.strip().lower() for col in df.columns]
-        # Rebuild the column mapping from the freshly downloaded data.
-        try:
-            column_df = pd.read_csv(f"dashboard_columns_{username}.csv")
-            column_map = dict(zip(column_df['lowercase'], column_df['original']))
-        except Exception:
-            column_map = {col.lower(): col for col in df.columns}
-        
-        # Reformat any link columns:
+        # Rebuild the column mapping (optionally, you can cache this if needed)
+        column_map = {col.lower(): col for col in df.columns}
         keywords = ['link', 'job page', 'resume']
         for col in df.columns:
             if any(keyword in col.lower() for keyword in keywords):
                 df[col] = df[col].apply(lambda x: f"[link]({x})" if pd.notna(x) and str(x).strip() != "" else "")
-        
         total_applications = len(df)
         success_rate = calculate_success_rate(df, column_map)
         recent_activity = get_recent_activity(df, column_map)
         approved_count = count_status(df, 'approved|offer|accepted', column_map)
         interview_count = count_status(df, 'interview', column_map)
         rejected_count = count_status(df, 'rejected|declined', column_map)
-        
         status_pie = create_status_pie(df, column_map)
         timeline_chart = create_timeline_chart(df, column_map)
         company_chart = create_company_distribution(df, column_map)
-        
         status_col = get_column_if_exists(df, ['status', 'application status', 'job status'], column_map)
         status_options = []
         if status_col:
             statuses = df[status_col].dropna().unique()
             status_options = [{'label': status, 'value': status} for status in statuses]
-        
         content = html.Div([
-            # Last refreshed timestamp to show callback trigger.
             html.Div(f"Last refreshed: {datetime.now().strftime('%b %d, %Y, %I:%M:%S %p')}",
                      style={'textAlign': 'center', 'margin': '10px 0', 'fontStyle': 'italic'}),
-            # Metrics Cards
             html.Div([
                 html.Div([
                     html.Div([
@@ -471,8 +499,6 @@ def build_dashboard_content(username):
                     ], className="stats-card", style={'backgroundColor': '#ffc107'}),
                 ], className="card", style={'width': '24%', 'margin': '0 0.5%', 'padding': '0'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'marginBottom': '20px'}),
-            
-            # Charts Section
             html.Div([
                 html.Div([
                     html.Div([dcc.Graph(figure=status_pie)], className="card", style={'width': '48%', 'margin': '0 1% 20px 0'}),
@@ -482,8 +508,6 @@ def build_dashboard_content(username):
                     html.Div([dcc.Graph(figure=company_chart)], className="card", style={'width': '100%', 'margin': '0 0 20px 0'})
                 ])
             ]),
-            
-            # Data Table with Filters
             html.Div([
                 html.H3("Application Details", style={'marginBottom': '15px'}),
                 html.Div([
@@ -543,54 +567,48 @@ def build_dashboard_content(username):
                           'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'}],
                 )
             ], className="card"),
-            
-            # Instructions and Footer
-           # Instructions and Footer (Updated)
-html.Div([
-    html.H4("About AplyEase", style={'marginBottom': '15px', 'textAlign': 'center'}),
-    html.P(
-        "Hi, I'm Mohammad Ibrahim Saleem, the creator of AplyEase—a revolutionary tool designed to simplify your job and internship applications so you can focus on your strengths and growth.",
-        style={'lineHeight': '1.6', 'textAlign': 'center'}
-    ),
-    html.H5("Our Mission", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
-    html.P(
-        "AplyEase is a reverse recruiting firm dedicated to managing your application process efficiently. We handle everything from ATS resume optimization to proactive recruiter outreach, allowing you to build an impressive digital portfolio and focus on what matters most—your career development.",
-        style={'lineHeight': '1.6', 'textAlign': 'center'}
-    ),
-    html.H5("What We Offer", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
-    html.Ul([
-        html.Li("ATS Resume Optimization – Tailor your resume to successfully pass Applicant Tracking Systems."),
-        html.Li("AI-Powered Job Search – Discover opportunities that match your skills and career goals."),
-        html.Li("Digital Portfolio Creation – Showcase your projects and achievements online."),
-        html.Li("LinkedIn Profile Enhancement – Optimize your professional presence."),
-        html.Li("Application Tracking – Monitor your application status in real time."),
-        html.Li("Recruiter Outreach – Connect with hiring managers to increase your chances of landing interviews.")
-    ], style={'lineHeight': '1.6'}),
-    html.P(
-        "Join hundreds of successful job seekers who have transformed their application process with AplyEase.",
-        style={'marginTop': '15px', 'lineHeight': '1.6', 'textAlign': 'center'}
-    )
-], className="card", style={'marginTop': '20px'}),
-
-html.Footer([
-    html.P("AplyEase © 2025. All Rights Reserved. Designed by Mohammad Ibrahim Saleem.", 
-           style={'textAlign': 'center', 'color': '#6c757d', 'marginTop': '30px'})
-])
-
+            # Instructions and Footer (Updated)
+            html.Div([
+                html.H4("About AplyEase", style={'marginBottom': '15px', 'textAlign': 'center'}),
+                html.P(
+                    "Hi, I'm Mohammad Ibrahim Saleem, the creator of AplyEase—a revolutionary tool designed to simplify your job and internship applications so you can focus on your strengths and growth.",
+                    style={'lineHeight': '1.6', 'textAlign': 'center'}
+                ),
+                html.H5("Our Mission", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
+                html.P(
+                    "AplyEase is a reverse recruiting firm dedicated to managing your application process efficiently. We handle everything from ATS resume optimization to proactive recruiter outreach, allowing you to build an impressive digital portfolio and focus on what matters most—your career development.",
+                    style={'lineHeight': '1.6', 'textAlign': 'center'}
+                ),
+                html.H5("What We Offer", style={'marginTop': '20px', 'marginBottom': '10px', 'textAlign': 'center'}),
+                html.Ul([
+                    html.Li("ATS Resume Optimization – Tailor your resume to successfully pass Applicant Tracking Systems."),
+                    html.Li("AI-Powered Job Search – Discover opportunities that match your skills and career goals."),
+                    html.Li("Digital Portfolio Creation – Showcase your projects and achievements online."),
+                    html.Li("LinkedIn Profile Enhancement – Optimize your professional presence."),
+                    html.Li("Application Tracking – Monitor your application status in real time."),
+                    html.Li("Recruiter Outreach – Connect with hiring managers to increase your chances of landing interviews.")
+                ], style={'lineHeight': '1.6'}),
+                html.P(
+                    "Join hundreds of successful job seekers who have transformed their application process with AplyEase.",
+                    style={'marginTop': '15px', 'lineHeight': '1.6', 'textAlign': 'center'}
+                )
+            ], className="card", style={'marginTop': '20px'}),
+            html.Footer([
+                html.P("AplyEase © 2025. All Rights Reserved. Designed by Mohammad Ibrahim Saleem.", 
+                       style={'textAlign': 'center', 'color': '#6c757d', 'marginTop': '30px'})
+            ])
         ])
-
-        
         return content
     except Exception as e:
-        return html.Div(f"Error loading dashboard for {username}: {str(e)}",
+        return html.Div(f"Error loading dashboard for {sheet_url}: {str(e)}",
                         style={'textAlign': 'center', 'marginTop': '20px', 'color': 'red'})
 
-def dashboard_layout(username):
+def dashboard_layout(sheet_url):
     return html.Div([
-        dcc.Store(id="dashboard-username", data=username),
+        dcc.Store(id="dashboard-sheet-url", data=sheet_url),
         dcc.Interval(id="auto-refresh", interval=30*1000, n_intervals=0),  # refresh every 30 seconds
-        build_dashboard_header(username),
-        html.Div(id="dashboard-content", children=build_dashboard_content(username))
+        build_dashboard_header(sheet_url),
+        html.Div(id="dashboard-content", children=build_dashboard_content(sheet_url))
     ], className="dashboard-container")
 
 # ---------------------------------
@@ -599,13 +617,13 @@ def dashboard_layout(username):
 @app.callback(Output('page-content', 'children'),
               Input('url', 'pathname'))
 def display_page(pathname):
-    if not pathname or pathname == "/" or pathname == "":
+    # If the URL is just "/" show the home page.
+    if not pathname or pathname == "/":
         return home_layout()
-    m = re.match(r'^/dashboard/([^/]+)$', pathname)
-    if m:
-        username = m.group(1)
-        return dashboard_layout(username)
-    return html.Div("404: Page not found", style={'textAlign': 'center', 'marginTop': '20px'})
+    # Otherwise, treat the full pathname (minus the leading '/') as the Google Sheet URL.
+    # (It must be URL-encoded.)
+    sheet_url = pathname[1:]
+    return dashboard_layout(sheet_url)
 
 # ---------------------------------
 # CALLBACK TO REFRESH DASHBOARD CONTENT (AUTO & MANUAL)
@@ -614,14 +632,14 @@ def display_page(pathname):
     Output('dashboard-content', 'children'),
     [Input('refresh-button', 'n_clicks'),
      Input('auto-refresh', 'n_intervals')],
-    State('dashboard-username', 'data')
+    State('dashboard-sheet-url', 'data')
 )
-def update_dashboard_content(n_clicks, n_intervals, username):
+def update_dashboard_content(n_clicks, n_intervals, sheet_url):
     print(f"Refresh triggered: n_clicks={n_clicks}, n_intervals={n_intervals}")
-    return build_dashboard_content(username)
+    return build_dashboard_content(sheet_url)
 
 # ---------------------------------
-# Assets Route (if needed)
+# Assets Route
 # ---------------------------------
 @server.route('/assets/<path:path>')
 def serve_assets(path):
