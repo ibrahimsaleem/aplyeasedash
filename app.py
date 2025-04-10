@@ -477,25 +477,25 @@ def build_dashboard_content(sheet_url):
                 html.Div([
                     html.Div([
                         html.H2(total_applications, style={'margin': '0', 'fontSize': '36px'}),
-                        html.P("Total Applications", style={'margin': '5px 0 0 0', 'color': '#666'})
+                        html.P("Total Applications", style={'margin': '5px 0 0 0', 'color': '#FFFFFF'})
                     ], className="stats-card", style={'backgroundColor': '#4b6cb7'}),
                 ], className="card", style={'width': '24%', 'margin': '0 0.5%', 'padding': '0'}),
                 html.Div([
                     html.Div([
                         html.H2(interview_count, style={'margin': '0', 'fontSize': '36px'}),
-                        html.P("Interviews", style={'margin': '5px 0 0 0', 'color': '#666'})
+                        html.P("Interviews", style={'margin': '5px 0 0 0', 'color': '#FFFFFF'})
                     ], className="stats-card", style={'backgroundColor': '#17a2b8'}),
                 ], className="card", style={'width': '24%', 'margin': '0 0.5%', 'padding': '0'}),
                 html.Div([
                     html.Div([
                         html.H2(approved_count, style={'margin': '0', 'fontSize': '36px'}),
-                        html.P("Approved", style={'margin': '5px 0 0 0', 'color': '#666'})
+                        html.P("Approved", style={'margin': '5px 0 0 0', 'color': '#FFFFFF'})
                     ], className="stats-card", style={'backgroundColor': '#28a745'}),
                 ], className="card", style={'width': '24%', 'margin': '0 0.5%', 'padding': '0'}),
                 html.Div([
                     html.Div([
                         html.H2(success_rate, style={'margin': '0', 'fontSize': '36px'}),
-                        html.P("Success Rate", style={'margin': '5px 0 0 0', 'color': '#666'})
+                        html.P("Success Rate", style={'margin': '5px 0 0 0', 'color': '#FFFFFF'})
                     ], className="stats-card", style={'backgroundColor': '#ffc107'}),
                 ], className="card", style={'width': '24%', 'margin': '0 0.5%', 'padding': '0'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'marginBottom': '20px'}),
